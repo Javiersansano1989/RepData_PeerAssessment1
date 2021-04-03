@@ -1,0 +1,297 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>"Reproducible Research: Peer Assessment 1" </title></head><body>
+<h2 id="loading-and-preprocessing-the-data">Loading and preprocessing the data</h2>
+<p>This is the First Project of the Reproducible Research Course.</p>
+<p>Of course, the first step is to show that the data is true, so the download code is worth to include, and for space saving concerns, it's also convenient to delete the zip file, even if it could be done so at the end.</p>
+<p><code>r
+download.file(url = "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip",
+              destfile = "project1_data.zip",
+              method = "curl")
+unzip(zipfile = "project1_data.zip", exdir = getwd())
+file.remove("project1_data.zip")</code></p>
+<p>```</p>
+<h2 id="1-true">[1] TRUE</h2>
+<p>```</p>
+<p><code>r
+Raw_Data &lt;- read.csv("activity.csv")
+file.remove("activity.csv")</code></p>
+<p>```</p>
+<h2 id="1-true_1">[1] TRUE</h2>
+<p>```</p>
+<h1 id="answering-the-questions">Answering the Questions</h1>
+<h2 id="what-is-the-mean-total-number-of-steps-taken-per-day">What is the mean total number of steps taken per day?</h2>
+<p>For this question, given that there are multiple observations for each day, the data must be AGGREGATED. Though the removal of missing values might be the proper thing to do, in this case, the Raw_Data dataframe will be the one to use for the time being. Nevertheless, as per the instructions, the missing values will be ignored, and to do so, the na.rm = TRUE argument will be used.</p>
+<p>Still, formatting the date does seem like a good idea.</p>
+<p><code>r
+Raw_Data$date &lt;- as.Date.character(Raw_Data$date)
+str(Raw_Data)</code></p>
+<p>```</p>
+<h2 id="dataframe-17568-obs-of-3-variables">'data.frame':    17568 obs. of  3 variables:</h2>
+<h2 id="steps-int-na-na-na-na-na-na-na-na-na-na">$ steps   : int  NA NA NA NA NA NA NA NA NA NA ...</h2>
+<h2 id="date-date-format-2012-10-01-2012-10-01">$ date    : Date, format: "2012-10-01" "2012-10-01" ...</h2>
+<h2 id="interval-int-0-5-10-15-20-25-30-35-40-45">$ interval: int  0 5 10 15 20 25 30 35 40 45 ...</h2>
+<p>```</p>
+<p><code>r
+summary(Raw_Data)</code></p>
+<p>```</p>
+<h2 id="steps-date-interval">steps             date               interval</h2>
+<h2 id="min-000-min-2012-10-01-min-00">Min.   :  0.00   Min.   :2012-10-01   Min.   :   0.0</h2>
+<h2 id="1st-qu-000-1st-qu2012-10-16-1st-qu-5888">1st Qu.:  0.00   1st Qu.:2012-10-16   1st Qu.: 588.8</h2>
+<h2 id="median-000-median-2012-10-31-median-11775">Median :  0.00   Median :2012-10-31   Median :1177.5</h2>
+<h2 id="mean-3738-mean-2012-10-31-mean-11775">Mean   : 37.38   Mean   :2012-10-31   Mean   :1177.5</h2>
+<h2 id="3rd-qu-1200-3rd-qu2012-11-15-3rd-qu17662">3rd Qu.: 12.00   3rd Qu.:2012-11-15   3rd Qu.:1766.2</h2>
+<h2 id="max-80600-max-2012-11-30-max-23550">Max.   :806.00   Max.   :2012-11-30   Max.   :2355.0</h2>
+<h2 id="nas-2304">NA's   :2304</h2>
+<p>```</p>
+<p>Now an aggregated dataframe must be created, which will be called Daily_Summary.</p>
+<p><code>r
+Daily_Summary &lt;- aggregate(list(Steps = Raw_Data$steps), by = list(date = Raw_Data$date), FUN = function(x) sum(x, na.rm = TRUE))
+str(Daily_Summary)</code></p>
+<p>```</p>
+<h2 id="dataframe-61-obs-of-2-variables">'data.frame':    61 obs. of  2 variables:</h2>
+<h2 id="date-date-format-2012-10-01-2012-10-02">$ date : Date, format: "2012-10-01" "2012-10-02" ...</h2>
+<h2 id="steps-int-0-126-11352-12116-13294-15420-11015-0-12811-9900">$ Steps: int  0 126 11352 12116 13294 15420 11015 0 12811 9900 ...</h2>
+<p>```</p>
+<p><code>r
+summary(Daily_Summary)</code></p>
+<p>```</p>
+<h2 id="date-steps">date                Steps</h2>
+<h2 id="min-2012-10-01-min-0">Min.   :2012-10-01   Min.   :    0</h2>
+<h2 id="1st-qu2012-10-16-1st-qu-6778">1st Qu.:2012-10-16   1st Qu.: 6778</h2>
+<h2 id="median-2012-10-31-median-10395">Median :2012-10-31   Median :10395</h2>
+<h2 id="mean-2012-10-31-mean-9354">Mean   :2012-10-31   Mean   : 9354</h2>
+<h2 id="3rd-qu2012-11-15-3rd-qu12811">3rd Qu.:2012-11-15   3rd Qu.:12811</h2>
+<h2 id="max-2012-11-30-max-21194">Max.   :2012-11-30   Max.   :21194</h2>
+<p>```</p>
+<p>And with a summarized dataframe, the plot that answers the question can be generated.</p>
+<p>```r
+par(mar = c(6, 5, 1.5, 2.1), mgp = c(3.75, 0.5, 0))</p>
+<p>barplot(height = Daily_Summary$Steps, names = format(as.Date(Daily_Summary$date), "%d-%b-%Y"), main = "Daily Steps", cex.main = 0.8, ylab = "Steps", xlab = "date", cex.axis = 0.7, cex.lab = 0.8, cex.names = 0.6, las = 2, ylim = c(0, 22000), yaxt = "n")</p>
+<p>axis(side = 2, seq(0, 22000, 1000), las = 1, cex.axis = 0.7)</p>
+<p>abline(h = round(max(Daily_Summary$Steps), digits = 0), col = "red", lty = 1, lwd = 2)</p>
+<p>abline(h = round(mean(Daily_Summary$Steps), digits = 0), col = "blue", lty = 5, lwd = 2)</p>
+<p>abline(h = median(Daily_Summary$Steps), col = "black", lty = 3, lwd = 2)</p>
+<p>legend("top", c(paste("Max = ", round(max(Daily_Summary$Steps), digits = 0), sep = ""), paste("Mean = ", round(mean(Daily_Summary$Steps), digits = 0), sep = ""), paste("Median = ", round(median(Daily_Summary$Steps), digits = 0), sep = "")), lty = c(1, 5, 2), lwd = 1, cex = 0.7, col = c("red", "blue", "black"))
+```</p>
+<p><img alt="" src="PA1_template_files/figure-html/Plot" title="1-1.png" /><!-- --></p>
+<p>It was deemed convenient to place the x-axis values vertically and in a d-b-Y format to better grasp the data.</p>
+<p>However, many might ask themselves, why did you not make a histogram? Well, the histogram pretty much count the times an observation's value is repeated, or, in other words, "how many times X steps have been taken in a single observation?". So, in order to count the steps taken each day, a plot that relates both variables, date and total steps taken in said day, is better. Though a line plot might have also worked out, a barplot is better.</p>
+<h2 id="what-is-the-average-daily-activity-pattern">What is the average daily activity pattern?</h2>
+<p>To answer this question, the reader must understand that, even though the intervals are factors/numbers/integers, in fact, this variable is more of a qualitative one, representing the observations themselves.</p>
+<p>As such, what this question does is compare the intervals with one another. And so, a new aggregation is done, this time with the mean function.</p>
+<p><code>r
+Intervals_Average &lt;- aggregate(list(Avg_Steps = Raw_Data$steps), by = list(Interval = Raw_Data$interval), FUN = function(x) mean(x, na.rm = TRUE))
+str(Intervals_Average)</code></p>
+<p>```</p>
+<h2 id="dataframe-288-obs-of-2-variables">'data.frame':    288 obs. of  2 variables:</h2>
+<h2 id="interval-int-0-5-10-15-20-25-30-35-40-45_1">$ Interval : int  0 5 10 15 20 25 30 35 40 45 ...</h2>
+<h2 id="avg_steps-num-1717-03396-01321-01509-00755">$ Avg_Steps: num  1.717 0.3396 0.1321 0.1509 0.0755 ...</h2>
+<p>```</p>
+<p><code>r
+summary(Intervals_Average)</code></p>
+<p>```</p>
+<h2 id="interval-avg_steps">Interval        Avg_Steps</h2>
+<h2 id="min-00-min-0000">Min.   :   0.0   Min.   :  0.000</h2>
+<h2 id="1st-qu-5888-1st-qu-2486">1st Qu.: 588.8   1st Qu.:  2.486</h2>
+<h2 id="median-11775-median-34113">Median :1177.5   Median : 34.113</h2>
+<h2 id="mean-11775-mean-37383">Mean   :1177.5   Mean   : 37.383</h2>
+<h2 id="3rd-qu17662-3rd-qu-52835">3rd Qu.:1766.2   3rd Qu.: 52.835</h2>
+<h2 id="max-23550-max-206170">Max.   :2355.0   Max.   :206.170</h2>
+<p>```</p>
+<p>After aggregating the data, it can be visualized</p>
+<p>```r
+plot(Intervals_Average$Interval, Intervals_Average$Avg_Steps, type = "l", main = "Average Activity Pattern", ylab = "Avg_Steps", xlab = "Intervals", cex.axis = 0.7, xaxt = "n", yaxt = "n", xlim = c(0, 2400), ylim = c(0, 210))</p>
+<p>axis(side = 1, seq(0, 2355, 15), las = 2, cex.axis = 0.7)
+axis(side = 2, seq(0, 210, 10), las = 2, cex.axis = 0.7)</p>
+<p>abline(h = round(max(Intervals_Average$Avg_Steps), digits = 0), col = "red", lty = 1, lwd = 2)</p>
+<p>abline(v = Intervals_Average$Interval[round(Intervals_Average$Avg_Steps, digits = 0) == round(max(Intervals_Average$Avg_Steps), digits = 0)], col = "red", lty = 1, lwd = 2)</p>
+<p>abline(h = round(mean(Intervals_Average$Avg_Steps), digits = 0), col = "blue", lty = 5, lwd = 2)</p>
+<p>abline(v = Intervals_Average$Interval[round(Intervals_Average$Avg_Steps, digits = 0) == round(mean(Intervals_Average$Avg_Steps), digits = 0)], col = "blue", lty = 5, lwd = 2)</p>
+<p>abline(h = round(median(Intervals_Average$Avg_Steps), digits = 0), col = "black", lty = 2, lwd = 2)</p>
+<p>abline(v = Intervals_Average$Interval[round(Intervals_Average$Avg_Steps, digits = 0) == round(median(Intervals_Average$Avg_Steps), digits = 0)], col = "black", lty = 2, lwd = 2)</p>
+<p>legend("left", c(paste("Max = ", round(max(Intervals_Average$Avg_Steps), digits = 0), " steps", sep = ""), paste("Mean = ", round(mean(Intervals_Average$Avg_Steps), digits = 0), " steps", sep = ""), paste("Median = ", round(median(Intervals_Average$Avg_Steps), digits = 0), " steps", sep = "")), lty = c(1, 5, 2), lwd = 1, cex = 0.7, col = c("red", "blue", "black"))
+```</p>
+<p><img alt="" src="PA1_template_files/figure-html/Plot" title="2-1.png" /><!-- --></p>
+<p>So, on an average day:</p>
+<p><code>r
+paste("(1) The maximum number of steps, ", round(max(Intervals_Average$Avg_Steps), digits = 0), " steps, are taken during the ", Intervals_Average$Interval[round(Intervals_Average$Avg_Steps, digits = 0) == round(max(Intervals_Average$Avg_Steps), digits = 0)], "th interval", sep = "")</code></p>
+<p>```</p>
+<h2 id="1-1-the-maximum-number-of-steps-206-steps-are-taken-during-the-835th-interval">[1] "(1) The maximum number of steps, 206 steps, are taken during the 835th interval"</h2>
+<p>```</p>
+<p>```r
+median_intervals &lt;- as.vector(Intervals_Average$Interval[round(Intervals_Average$Avg_Steps, digits = 0) == round(mean(Intervals_Average$Avg_Steps), digits = 0)])</p>
+<p>paste("(2) The average number of steps, ", round(mean(Intervals_Average$Avg_Steps), digits = 0), " steps, are taken during the ", median_intervals[1], "th, ", median_intervals[2], "th, and ", median_intervals[3], "th intervals", sep = "")
+```</p>
+<p>```</p>
+<h2 id="1-2-the-average-number-of-steps-37-steps-are-taken-during-the-650th-1035th-and-1755th-intervals">[1] "(2) The average number of steps, 37 steps, are taken during the 650th, 1035th, and 1755th intervals"</h2>
+<p>```</p>
+<p><code>r
+paste("(3) The median number of steps, ", round(median(Intervals_Average$Avg_Steps), digits = 0), " steps, are taken during the ", Intervals_Average$Interval[round(Intervals_Average$Avg_Steps, digits = 0) == round(median(Intervals_Average$Avg_Steps), digits = 0)], "th interval", sep = "")</code></p>
+<p>```</p>
+<h2 id="1-3-the-median-number-of-steps-34-steps-are-taken-during-the-1955th-interval">[1] "(3) The median number of steps, 34 steps, are taken during the 1955th interval"</h2>
+<p>```</p>
+<p>Of course, the summary of the dataframe reveals that the actual max, mean and median are not integers, so the highlighted intervals are the result of rounding the values. It is expected that the Max value has a corresponding interval, but the same is unlikely to be said about the mean or any quantiles. Also, even if one wants to force an interval for the these values by rounding the data, the method for rounding (approximating, rounding-up, truncating) could give different intervals.</p>
+<p>Therefore:</p>
+<p><code>r
+paste("(1) The average maximum number of steps, ", max(Intervals_Average$Avg_Steps), " steps, are taken during the ", Intervals_Average$Interval[which.max(Intervals_Average$Avg_Steps)], "th interval", sep = "")</code></p>
+<p>```</p>
+<h2 id="1-1-the-average-maximum-number-of-steps-206169811320755-steps-are-taken-during-the-835th-interval">[1] "(1) The average maximum number of steps, 206.169811320755 steps, are taken during the 835th interval"</h2>
+<p>```</p>
+<h2 id="inputting-missing-values">Inputting missing values</h2>
+<p>As the summary given at the beginning of this document show, the missing values in the data amount to:</p>
+<p><code>r
+paste(sum(is.na(Raw_Data$steps)), " which represents ", round(100*(sum(is.na(Raw_Data$steps))/nrow(Raw_Data)), digits = 2), "% of the observations remaining", sep = "")</code></p>
+<p>```</p>
+<h2 id="1-2304-which-represents-1311-of-the-observations-remaining">[1] "2304 which represents 13.11% of the observations remaining"</h2>
+<p>```</p>
+<p>As the instructions indicate, the missing values must be filled. Luckily, from the previous step, the average of each interval has already been calculated. All that is left is to round said numbers (for consistency sake), and replace the NAs with them. Of course, a new dataframe must be created, which at first, will only be a copy of the original data.</p>
+<p>Afterwards, this to be Filled_Dataframe's steps column will be checked for NAs, and whenever one is found, the corresponding interval will be matched with the intervals within the Intervals_Average dataframe, and the NA will be replaced by the rounded average.</p>
+<p>```r
+Filled_Dataframe &lt;- Raw_Data
+Filled_Dataframe$date &lt;- as.Date.character(Filled_Dataframe$date)</p>
+<p>for (i in 1:length(Filled_Dataframe$steps)) {
+  if(is.na(Filled_Dataframe$steps[i])) {
+    Filled_Dataframe$steps[i] &lt;- round(Intervals_Average$Avg_Steps[match(Filled_Dataframe$interval, Intervals_Average$Interval)], digits = 0)
+  }
+}
+str(Filled_Dataframe)
+```</p>
+<p>```</p>
+<h2 id="dataframe-17568-obs-of-3-variables_1">'data.frame':    17568 obs. of  3 variables:</h2>
+<h2 id="steps-num-2-2-2-2-2-2-2-2-2-2">$ steps   : num  2 2 2 2 2 2 2 2 2 2 ...</h2>
+<h2 id="date-date-format-2012-10-01-2012-10-01_1">$ date    : Date, format: "2012-10-01" "2012-10-01" ...</h2>
+<h2 id="interval-int-0-5-10-15-20-25-30-35-40-45_2">$ interval: int  0 5 10 15 20 25 30 35 40 45 ...</h2>
+<p>```</p>
+<p><code>r
+summary(Filled_Dataframe)</code></p>
+<p>```</p>
+<h2 id="steps-date-interval_1">steps             date               interval</h2>
+<h2 id="min-000-min-2012-10-01-min-00_1">Min.   :  0.00   Min.   :2012-10-01   Min.   :   0.0</h2>
+<h2 id="1st-qu-000-1st-qu2012-10-16-1st-qu-5888_1">1st Qu.:  0.00   1st Qu.:2012-10-16   1st Qu.: 588.8</h2>
+<h2 id="median-000-median-2012-10-31-median-11775_1">Median :  0.00   Median :2012-10-31   Median :1177.5</h2>
+<h2 id="mean-3274-mean-2012-10-31-mean-11775">Mean   : 32.74   Mean   :2012-10-31   Mean   :1177.5</h2>
+<h2 id="3rd-qu-200-3rd-qu2012-11-15-3rd-qu17662">3rd Qu.:  2.00   3rd Qu.:2012-11-15   3rd Qu.:1766.2</h2>
+<h2 id="max-80600-max-2012-11-30-max-23550_1">Max.   :806.00   Max.   :2012-11-30   Max.   :2355.0</h2>
+<p>```</p>
+<p>Now that the Dataframe has been created, we can proceed to REPEAT question 1, applied on the new frame.</p>
+<p>First, new aggregated dataframe is created:</p>
+<p><code>r
+Filled_Summary &lt;- aggregate(list(Steps = Filled_Dataframe$steps), by = list(date = Filled_Dataframe$date), FUN = function(x) sum(x, na.rm = TRUE))
+str(Filled_Summary)</code></p>
+<p>```</p>
+<h2 id="dataframe-61-obs-of-2-variables_1">'data.frame':    61 obs. of  2 variables:</h2>
+<h2 id="date-date-format-2012-10-01-2012-10-02_1">$ date : Date, format: "2012-10-01" "2012-10-02" ...</h2>
+<h2 id="steps-num-576-126-11352-12116-13294">$ Steps: num  576 126 11352 12116 13294 ...</h2>
+<p>```</p>
+<p><code>r
+summary(Filled_Summary)</code></p>
+<p>```</p>
+<h2 id="date-steps_1">date                Steps</h2>
+<h2 id="min-2012-10-01-min-41">Min.   :2012-10-01   Min.   :   41</h2>
+<h2 id="1st-qu2012-10-16-1st-qu-6778_1">1st Qu.:2012-10-16   1st Qu.: 6778</h2>
+<h2 id="median-2012-10-31-median-10395_1">Median :2012-10-31   Median :10395</h2>
+<h2 id="mean-2012-10-31-mean-9430">Mean   :2012-10-31   Mean   : 9430</h2>
+<h2 id="3rd-qu2012-11-15-3rd-qu12811_1">3rd Qu.:2012-11-15   3rd Qu.:12811</h2>
+<h2 id="max-2012-11-30-max-21194_1">Max.   :2012-11-30   Max.   :21194</h2>
+<p>```</p>
+<p>And the new "histogram" is plotted. But in this case, the summaries of both the filled frame and the missing values frame are plotted.</p>
+<p><img alt="" src="PA1_template_files/figure-html/Plot" title="3-1.png" /><!-- --></p>
+<p>From the plots, the mean has gone slightly up, but for argument's sake, the values will be compared without rounding</p>
+<p><code>r
+paste("The Max, Average and Median steps taken amount to (1) ", max(Daily_Summary$Steps), ", ", mean(Daily_Summary$Steps), " and ", median(Daily_Summary$Steps), " when there are missing values, whereas they become (2) ", max(Filled_Summary$Steps), ", ", mean(Filled_Summary$Steps), " and ", median(Filled_Summary$Steps), " when said NAs are replaced by the average across intervals", sep = "")</code></p>
+<p>```</p>
+<h2 id="1-the-max-average-and-median-steps-taken-amount-to-1-21194-935422950819672-and-10395-when-there-are-missing-values-whereas-they-become-2-21194-942977049180328-and-10395-when-said-nas-are-replaced-by-the-average-across-intervals">[1] "The Max, Average and Median steps taken amount to (1) 21194, 9354.22950819672 and 10395 when there are missing values, whereas they become (2) 21194, 9429.77049180328 and 10395 when said NAs are replaced by the average across intervals"</h2>
+<p>```</p>
+<p>So, replacing the missing values with the average of the corresponding interval increases the mean, though the median remains the same.</p>
+<p>Whether the 13% of data "missing" is a big chunk or not, it could be inferred that most of the missing values could be found on the latter half of the timeframe; From the second plot, one can notice, from the spike that is the max, that most of the data is located before half of the day has gone by. And from the third plot, one can see that the "new values" have filled the blanks found in the latter half of the timeframe. SO, IT MAKES SENSE THAT THE MEDIAN REMAINS THE SAME.</p>
+<h2 id="are-there-differences-in-activity-patterns-between-weekdays-and-weekends">Are there differences in activity patterns between weekdays and weekends?</h2>
+<p>In this case, a final dataframe should be created, one that indicates the day of the week, ideally in numbers, to differentiate saturday and sunday (6, 7) from the rest. Of course, the data used is the one without missing values.</p>
+<p>```r
+Full_Dataframe &lt;- Filled_Dataframe
+Full_Dataframe$weekday &lt;- as.numeric(strftime(as.Date(Full_Dataframe$date, "%d-%b-%Y"), "%u"))
+Full_Dataframe$day_or_end &lt;- "weekday"</p>
+<p>for (i in 1:length(Full_Dataframe$day_or_end)) {
+  if(Full_Dataframe$weekday[i] == 6 | Full_Dataframe$weekday[i] == 7) {
+    Full_Dataframe$day_or_end[i] &lt;- "weekend"
+  }
+}
+str(Full_Dataframe)
+```</p>
+<p>```</p>
+<h2 id="dataframe-17568-obs-of-5-variables">'data.frame':    17568 obs. of  5 variables:</h2>
+<h2 id="steps-num-2-2-2-2-2-2-2-2-2-2_1">$ steps     : num  2 2 2 2 2 2 2 2 2 2 ...</h2>
+<h2 id="date-date-format-2012-10-01-2012-10-01_2">$ date      : Date, format: "2012-10-01" "2012-10-01" ...</h2>
+<h2 id="interval-int-0-5-10-15-20-25-30-35-40-45_3">$ interval  : int  0 5 10 15 20 25 30 35 40 45 ...</h2>
+<h2 id="weekday-num-1-1-1-1-1-1-1-1-1-1">$ weekday   : num  1 1 1 1 1 1 1 1 1 1 ...</h2>
+<h2 id="day_or_end-chr-weekday-weekday-weekday-weekday">$ day_or_end: chr  "weekday" "weekday" "weekday" "weekday" ...</h2>
+<p>```</p>
+<p><code>r
+summary(Full_Dataframe)</code></p>
+<p>```</p>
+<h2 id="steps-date-interval-weekday">steps             date               interval         weekday</h2>
+<h2 id="min-000-min-2012-10-01-min-00-min-1000">Min.   :  0.00   Min.   :2012-10-01   Min.   :   0.0   Min.   :1.000</h2>
+<h2 id="1st-qu-000-1st-qu2012-10-16-1st-qu-5888-1st-qu2000">1st Qu.:  0.00   1st Qu.:2012-10-16   1st Qu.: 588.8   1st Qu.:2.000</h2>
+<h2 id="median-000-median-2012-10-31-median-11775-median-4000">Median :  0.00   Median :2012-10-31   Median :1177.5   Median :4.000</h2>
+<h2 id="mean-3274-mean-2012-10-31-mean-11775-mean-3918">Mean   : 32.74   Mean   :2012-10-31   Mean   :1177.5   Mean   :3.918</h2>
+<h2 id="3rd-qu-200-3rd-qu2012-11-15-3rd-qu17662-3rd-qu6000">3rd Qu.:  2.00   3rd Qu.:2012-11-15   3rd Qu.:1766.2   3rd Qu.:6.000</h2>
+<h2 id="max-80600-max-2012-11-30-max-23550-max-7000">Max.   :806.00   Max.   :2012-11-30   Max.   :2355.0   Max.   :7.000</h2>
+<h2 id="day_or_end">day_or_end</h2>
+<h2 id="length17568">Length:17568</h2>
+<h2 id="class-character">Class :character</h2>
+<h2 id="mode-character">Mode  :character</h2>
+<h2 id="_1"></h2>
+<h2 id="_2"></h2>
+<h2 id="_3"></h2>
+<p>```</p>
+<p>Now that the Data has been expanded to indicate whether the observation took place during a weekday or the weekend, it can be aggregated, just as with the 2�� question.</p>
+<p><code>r
+Intervals_Average_Full &lt;- aggregate(list(Avg_Steps = Full_Dataframe$steps), by = list(Interval = Full_Dataframe$interval, Week_Day_or_End = Full_Dataframe$day_or_end), FUN = function(x) mean(x, na.rm = TRUE))
+str(Intervals_Average_Full)</code></p>
+<p>```</p>
+<h2 id="dataframe-576-obs-of-3-variables">'data.frame':    576 obs. of  3 variables:</h2>
+<h2 id="interval-int-0-5-10-15-20-25-30-35-40-45_4">$ Interval       : int  0 5 10 15 20 25 30 35 40 45 ...</h2>
+<h2 id="week_day_or_end-chr-weekday-weekday-weekday-weekday">$ Week_Day_or_End: chr  "weekday" "weekday" "weekday" "weekday" ...</h2>
+<h2 id="avg_steps-num-2289-0667-0422-0444-0356">$ Avg_Steps      : num  2.289 0.667 0.422 0.444 0.356 ...</h2>
+<p>```</p>
+<p><code>r
+summary(Intervals_Average_Full)</code></p>
+<p>```</p>
+<h2 id="interval-week_day_or_end-avg_steps">Interval      Week_Day_or_End      Avg_Steps</h2>
+<h2 id="min-00-length576-min-0250">Min.   :   0.0   Length:576         Min.   :  0.250</h2>
+<h2 id="1st-qu-5888-class-character-1st-qu-1873">1st Qu.: 588.8   Class :character   1st Qu.:  1.873</h2>
+<h2 id="median-11775-mode-character-median-23076">Median :1177.5   Mode  :character   Median : 23.076</h2>
+<h2 id="mean-11775-mean-34418">Mean   :1177.5                      Mean   : 34.418</h2>
+<h2 id="3rd-qu17662-3rd-qu-54781">3rd Qu.:1766.2                      3rd Qu.: 54.781</h2>
+<h2 id="max-23550-max-203156">Max.   :2355.0                      Max.   :203.156</h2>
+<p>```</p>
+<p>Now, given that the question is only to compare the pattern between weekdays and the weekend, it is not necessary to include or determine the max values for either "segment". This part could be fulfilled elegantly and aesthetically with ggplot, but for simplicity's sake, coplot was chosen.</p>
+<p><code>r
+coplot(Avg_Steps ~ Interval | Week_Day_or_End, Intervals_Average_Full, show.given = TRUE, type = "l")</code></p>
+<p><img alt="" src="PA1_template_files/figure-html/Plot" title="4-1.png" /><!-- --></p>
+<p>Just from the plot comparison, the working days have fewer steps taken at the later three fifths of the day, whereas the weekend seems to be signifantly more leveled, at least in comparison to the weekdays.</p>
+<p>Also, the impact of the weekend average steps can't be denied; whereas as a whole the spikes found approximately at the intervals 1200ths, 1600ths and 1800ths go up and then down, those same spikes can be found in the weekdays segment at the same intervals but with a clearer rising tendency.</p>
+<h4 id="with-this-all-questions-should-have-been-answered">With this, all questions should have been answered.</h4>
+<p>Although ggplot might have worked better in some regard, specially for the last 2 questions, it proved to be difficult to work with when it came to adding the lines that highlighted the max, mean and median values and their intervals.</p>
+<p>And so, to finish this assignment, a final chunk of code will be included to delete all objects, and also to move the figures from the PA1_template_files to the instructions_fig</p>
+<p>```r
+rm(list = ls())</p>
+<p>file.copy(from = './PA1_template_files/figure-html/Plot 1-1.png', to = './instructions_fig/Plot 1-1.png')
+```</p>
+<p>```</p>
+<h2 id="1-true_2">[1] TRUE</h2>
+<p>```</p>
+<p><code>r
+file.copy(from = './PA1_template_files/figure-html/Plot 2-1.png', to = './instructions_fig/Plot 2-1.png')</code></p>
+<p>```</p>
+<h2 id="1-true_3">[1] TRUE</h2>
+<p>```</p>
+<p><code>r
+file.copy(from = './PA1_template_files/figure-html/Plot 3-1.png', to = './instructions_fig/Plot 3-1.png')</code></p>
+<p>```</p>
+<h2 id="1-true_4">[1] TRUE</h2>
+<p>```</p>
+<p><code>r
+file.copy(from = './PA1_template_files/figure-html/Plot 4-1.png', to = './instructions_fig/Plot 4-1.png')</code></p>
+<p>```</p>
+<h2 id="1-true_5">[1] TRUE</h2>
+<p>```</p>
+</body></html>
